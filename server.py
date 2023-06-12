@@ -76,7 +76,7 @@ def main():
     parser.add_argument(
         '--photo_dir',
         default=env('PHOTO_DIR', default='test_photos'),
-        help='Задать путь к каталогу с фотографиями'
+        help='Задать каталог с архивами фотографий'
     )
     parser.add_argument(
         '--log_filename',
@@ -106,8 +106,8 @@ def main():
     ])
     web.run_app(
         app,
-        host=env('HOST'),
-        port=env.int('PORT')
+        host=env('HOST', default='127.0.0.1'),
+        port=env.int('PORT', default=8080)
     )
 
 
