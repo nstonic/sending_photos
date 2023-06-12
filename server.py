@@ -5,6 +5,7 @@ import os
 import argparse
 from aiohttp import web
 import aiofiles
+from environs import Env
 
 PHOTO_DIR: str
 
@@ -63,6 +64,9 @@ async def handle_index_page(request):
 def main():
     global PHOTO_DIR
 
+    env = Env()
+    env.read_env()
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--log_off',
@@ -71,17 +75,23 @@ def main():
     )
     parser.add_argument(
         '--photo_dir',
-        default='test_photos',
+        default=env('PHOTO_DIR', default='test_photos'),
         help='Задать путь к каталогу с фотографиями'
     )
     parser.add_argument(
         '--log_filename',
-        default='server.log',
+        default=env('LOG_FILENAME', default='server.log'),
         help='Задать имя файла логов'
     )
     args = parser.parse_args()
 
-    logging.disable(args.log_off)
+    logging.disable(
+        any([
+            args.log_off,
+            env.bool('LOG_OFF')
+        ])
+    )
+
     logging.basicConfig(
         level=logging.INFO,
         filename=args.log_filename
@@ -96,8 +106,8 @@ def main():
     ])
     web.run_app(
         app,
-        host='192.168.0.254',
-        port=8080
+        host=env('HOST'),
+        port=env.int('PORT')
     )
 
 
