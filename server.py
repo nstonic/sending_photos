@@ -87,10 +87,7 @@ def main():
     args = parser.parse_args()
 
     logging.disable(
-        any([
-            args.log_off,
-            env.bool('LOG_OFF', default=False)
-        ])
+        args.log_off or env.bool('LOG_OFF', default=False)
     )
 
     logging.basicConfig(
