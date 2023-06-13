@@ -5,6 +5,7 @@ import os
 import argparse
 from aiohttp import web
 import aiofiles
+from aiohttp.web_request import Request
 from environs import Env
 
 PHOTO_DIR: str
@@ -16,8 +17,8 @@ async def not_found(request):
     return web.Response(text=content, content_type='text/html')
 
 
-async def archive(request):
-    *_, requested_dir = request.path.rstrip('/').split('/')
+async def archive(request: Request):
+    requested_dir = request.match_info.get('archive_hash', '')
     archive_path = os.path.join(PHOTO_DIR, requested_dir)
 
     if not os.path.exists(archive_path):
@@ -47,11 +48,11 @@ async def archive(request):
             if zipping_process.stdout.at_eof():
                 await response.write_eof()
                 break
-    except (asyncio.CancelledError, IndexError, SystemError, KeyboardInterrupt):
-        try:
-            await asyncio.wait_for(zipping_process.communicate(b''), timeout=1)
-        except TimeoutError:
+    finally:
+        if not zipping_process.returncode:
             zipping_process.kill()
+            await zipping_process.communicate(b'')
+        elif zipping_process.returncode < 0:
             logging.warning('Download was interrupted')
 
 
@@ -88,7 +89,7 @@ def main():
     logging.disable(
         any([
             args.log_off,
-            env.bool('LOG_OFF')
+            env.bool('LOG_OFF', default=False)
         ])
     )
 
