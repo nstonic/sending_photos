@@ -48,9 +48,11 @@ async def archive(request: Request):
             if zipping_process.stdout.at_eof():
                 await response.write_eof()
                 break
-    except (asyncio.CancelledError, IndexError, SystemError, KeyboardInterrupt) as ex:
+    except asyncio.CancelledError as ex:
         logging.warning('Download was interrupted')
         raise ex
+    except (IndexError, SystemError, KeyboardInterrupt):
+        logging.warning('Download was interrupted')
     finally:
         if not zipping_process.returncode:
             zipping_process.kill()
