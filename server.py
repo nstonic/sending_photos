@@ -18,18 +18,16 @@ async def not_found(request):
 
 
 async def archive(request: Request):
-    requested_dir = request.match_info.get('archive_hash', '')
-    archive_path = os.path.join(PHOTO_DIR, requested_dir)
-
-    if not os.path.exists(archive_path):
-        logging.warning(f'Archive {requested_dir} not found')
+    archive_hash = request.match_info.get('archive_hash', '')
+    archive_path = os.path.join(PHOTO_DIR, archive_hash)
+    if not archive_hash or not os.path.exists(archive_path):
+        logging.warning(f'Archive {archive_hash} not found')
         raise web.HTTPFound('/404')
 
     response = web.StreamResponse()
-
     response.headers.update({
         'Content-Type': 'multipart/form-data',
-        'Content-Disposition': f'filename="{requested_dir}.zip"',
+        'Content-Disposition': f'filename="{archive_hash}.zip"',
         'Transfer-Encoding': 'chunked',
     })
     response.enable_chunked_encoding()
@@ -54,7 +52,7 @@ async def archive(request: Request):
     except (IndexError, SystemError, KeyboardInterrupt):
         logging.warning('Download was interrupted')
     finally:
-        if not zipping_process.returncode:
+        if zipping_process.returncode is None:
             zipping_process.kill()
             await zipping_process.communicate(b'')
 
