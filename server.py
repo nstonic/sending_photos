@@ -48,12 +48,12 @@ async def archive(request: Request):
             if zipping_process.stdout.at_eof():
                 await response.write_eof()
                 break
+    except (asyncio.CancelledError, IndexError, SystemError, KeyboardInterrupt):
+        logging.warning('Download was interrupted')
     finally:
         if not zipping_process.returncode:
             zipping_process.kill()
             await zipping_process.communicate(b'')
-        elif zipping_process.returncode < 0:
-            logging.warning('Download was interrupted')
 
 
 async def handle_index_page(request):
